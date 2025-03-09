@@ -3,7 +3,7 @@ from functools import reduce
 from pymongo import MongoClient
 
 # MongoDB connection
-client = MongoClient(os.getenv('MONGODB_URI', 'mongodb://localhost:27017/'))
+client = MongoClient(os.getenv('MONGO_URI', 'mongodb://localhost:27017/'))
 db = client['students_db']
 students_collection = db['students']
 
