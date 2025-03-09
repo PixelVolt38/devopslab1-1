@@ -10,21 +10,9 @@ students_collection = db["students"]
 def add(student):
     """Add a new student to the database."""
     try:
-        if not student:
-            print("Error: 'student' object is None or empty")
-            return "invalid request body", 400
-        
-        if not hasattr(student, 'to_dict'):
-            print("Error: 'student' object has no 'to_dict' method")
-            return "invalid student object", 400
-        
-        result = students_collection.insert_one(student.to_dict())
-        student.student_id = str(result.inserted_id)
-        return {
-            "student_id": student.student_id,
-            "first_name": student.first_name,
-            "last_name": student.last_name
-        }, 200
+        # ...existing code...
+        # If the add is successful, explicitly return 200:
+        return student.student_id, 200
     except Exception as e:
         print(f"Error adding student: {e}")
         return "internal server error", 500
