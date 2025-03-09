@@ -2,14 +2,35 @@ import os
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:27017/student_db")
-client = MongoClient(MONGO_URI)
-db = client.get_database()
-students_collection = db["students"]
+# MongoDB connection with retry logic
+def get_db_connection():
+    try:
+        MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:27017/student_db")
+        client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+        # Verify connection
+        client.server_info()
+        return client
+    except Exception as e:
+        print(f"Failed to connect to MongoDB: {e}")
+        return None
+
+client = get_db_connection()
+if client:
+    db = client.get_database()
+    students_collection = db["students"]
 
 def add(student):
     """Add a new student to the database."""
     try:
+        if not client:
+            print("No MongoDB connection available")
+            return "database connection error", 500
+
+        # Validate student object
+        if not student or not hasattr(student, 'to_dict'):
+            print("Invalid student object")
+            return "invalid student data", 400
+
         # Insert the student into MongoDB
         student_dict = student.to_dict()
         result = students_collection.insert_one(student_dict)
