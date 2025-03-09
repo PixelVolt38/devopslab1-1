@@ -1,6 +1,9 @@
-FROM python:3.6-alpine
+FROM python:3.8-alpine
 
 RUN mkdir -p /usr/src/app
+
+RUN pip install --upgrade pip
+
 WORKDIR /usr/src/app
 
 COPY requirements.txt /usr/src/app/
