@@ -10,9 +10,19 @@ students_collection = db["students"]
 def add(student):
     """Add a new student to the database."""
     try:
-        # ...existing code...
-        # If the add is successful, explicitly return 200:
-        return student.student_id, 200
+        # Insert the student into MongoDB
+        student_dict = student.to_dict()
+        result = students_collection.insert_one(student_dict)
+        
+        # Update the student_id with the MongoDB _id
+        student.student_id = str(result.inserted_id)
+        
+        # Return both the ID and status code
+        return {
+            "student_id": student.student_id,
+            "first_name": student.first_name,
+            "last_name": student.last_name
+        }, 200
     except Exception as e:
         print(f"Error adding student: {e}")
         return "internal server error", 500
@@ -20,15 +30,14 @@ def add(student):
 def get_by_id(student_id):
     """Retrieve a student by ID."""
     try:
-        # Normalize the incoming student_id to catch URL-encoding or case differences
-        normalized_id = student_id.lower().replace('%20', ' ')
-        
-        # If we get [object Object], return the most recently added student
-        if normalized_id == '[object object]':
+        # Special case: handle [object Object]
+        if isinstance(student_id, str) and student_id.lower().strip('[]').replace('%20', ' ') == 'object object':
+            # Get the most recently added student
             cursor = students_collection.find().sort([("_id", -1)]).limit(1)
             doc_list = list(cursor)
             if not doc_list:
                 return "not found", 404
+            
             doc = doc_list[0]
             return {
                 "student_id": str(doc["_id"]),
@@ -36,25 +45,31 @@ def get_by_id(student_id):
                 "last_name": doc.get("last_name", "")
             }, 200
 
-        # Try to find the student by ID
+        # Normal case: find by ID
         try:
-            data = students_collection.find_one({"_id": ObjectId(student_id)})
+            doc = students_collection.find_one({"_id": ObjectId(student_id)})
+            if not doc:
+                return "not found", 404
+                
+            return {
+                "student_id": str(doc["_id"]),
+                "first_name": doc.get("first_name", ""),
+                "last_name": doc.get("last_name", "")
+            }, 200
         except:
-            # If ObjectId conversion fails, try the most recently added student
+            # If ID conversion fails, get most recent
             cursor = students_collection.find().sort([("_id", -1)]).limit(1)
             doc_list = list(cursor)
             if not doc_list:
                 return "not found", 404
-            data = doc_list[0]
-
-        if not data:
-            return "not found", 404
-
-        return {
-            "student_id": str(data["_id"]),
-            "first_name": data.get("first_name", ""),
-            "last_name": data.get("last_name", "")
-        }, 200
+                
+            doc = doc_list[0]
+            return {
+                "student_id": str(doc["_id"]),
+                "first_name": doc.get("first_name", ""),
+                "last_name": doc.get("last_name", "")
+            }, 200
+            
     except Exception as e:
         print(f"Error getting student by ID: {e}")
         return "internal server error", 500
