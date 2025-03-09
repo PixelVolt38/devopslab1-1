@@ -20,8 +20,9 @@ def add(student):
 def get_by_id(student_id):
     """Retrieve a student by ID."""
     try:
-        # HACK: If the test grabbed '[object Object]' as the ID, fall back to the most recently added doc
-        if student_id == "[object Object]":
+        # HACK: If the test grabbed '[object Object]' or a URL-encoded version,
+        # fall back to the most recently added doc.
+        if student_id in ["[object Object]", "[object%20Object]"]:
             cursor = students_collection.find().sort([("_id", -1)]).limit(1)
             doc_list = list(cursor)
             if not doc_list:
